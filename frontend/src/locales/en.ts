@@ -121,6 +121,7 @@ export const translations = {
     confirmDeleteWarning: 'This action cannot be undone and will permanently remove the model and its QR code.',
     deleteButton: 'Delete',
     deleteError: 'Failed to delete model',
+    deleteSuccess: 'Model deleted successfully',
     view: 'View',
     showing: 'Showing',
     to: 'to',

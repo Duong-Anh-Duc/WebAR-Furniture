@@ -35,9 +35,6 @@ Thumbs.db
 *.db-journal
 dev.db
 
-# Uploads
-uploads/
-public/uploads/
 
 # Prisma
 prisma/migrations/

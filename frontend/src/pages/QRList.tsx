@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 export const QRListPage: React.FC = () => {
   const { t } = useTranslation();
-  const { error } = useNotification();
+  const { error, success } = useNotification();
   const navigate = useNavigate();
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +79,7 @@ export const QRListPage: React.FC = () => {
       setIsDeleting(true);
       await modelApi.delete(modelToDelete.id);
       await loadModels();
+      success(t('qrList.deleteSuccess'));
     } catch (deleteError) {
       console.error('Failed to delete model:', deleteError);
       error(t('qrList.deleteError'));

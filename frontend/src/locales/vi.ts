@@ -121,6 +121,7 @@ export const translations = {
     confirmDeleteWarning: 'Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn mô hình và mã QR của nó.',
     deleteButton: 'Xóa',
     deleteError: 'Không thể xóa mô hình',
+    deleteSuccess: 'Xóa mô hình thành công',
     view: 'Xem',
     showing: 'Hiển thị',
     to: 'đến',
