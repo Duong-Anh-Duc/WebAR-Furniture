@@ -1,0 +1,27 @@
+// Đây là tệp lược đồ Prisma của bạn
+// Tìm hiểu thêm trong tài liệu: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Model {
+  id            String   @id @default(uuid())
+  name          String?
+  slug          String   @unique
+  echoEntryId   String
+  glbUrl        String
+  usdzUrl       String?
+  usdzReady     Boolean  @default(false)
+  status        String   @default("converting") // chuyển đổi, sẵn sàng, thất bại
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("models")
+  @@index([slug])
+  @@index([status])
+}
