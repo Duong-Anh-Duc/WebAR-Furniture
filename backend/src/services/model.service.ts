@@ -176,26 +176,30 @@ export class ModelService {
       try {
         // Try Blender conversion first
         logger.info('Converting GLB to USDZ using Blender', { glbPath, usdzPath });
-        await convertGlbToUsdz(glbPath, usdzPath);
+        const blenderSuccess = await convertGlbToUsdz(glbPath, usdzPath);
 
-        // Update model to ready
-        await prisma.model.update({
-          where: { id: modelId },
-          data: {
-            usdzReady: true,
-            status: 'ready',
-          },
-        });
+        if (blenderSuccess) {
+          // Update model to ready
+          await prisma.model.update({
+            where: { id: modelId },
+            data: {
+              usdzReady: true,
+              status: 'ready',
+            },
+          });
 
-        const fileSize = fs.statSync(usdzPath).size;
-        logger.info('USDZ conversion successful', { modelId, usdzPath, fileSize });
+          const fileSize = fs.statSync(usdzPath).size;
+          logger.info('USDZ conversion successful', { modelId, usdzPath, fileSize });
+        } else {
+          throw new Error('Blender conversion not available');
+        }
       } catch (error: any) {
-        logger.warn('Blender conversion failed, falling back to copy', {
+        logger.warn('Blender conversion failed or not available, falling back to copy', {
           modelId,
           error: error.message,
         });
 
-        // Fallback: Copy GLB to USDZ (for TEST_MODE or if Blender not installed)
+        // Fallback: Copy GLB to USDZ (for environments without Blender)
         try {
           fs.copyFileSync(glbPath, usdzPath);
           logger.info('Fallback: USDZ created by copying GLB', { glbPath, usdzPath });
