@@ -1,8 +1,10 @@
+import { useNotification } from '@/hooks/useNotification';
 import { useTranslation } from '@/hooks/useTranslation';
 import React, { useState } from 'react';
 
 export const LanguageSwitcher: React.FC = () => {
-  const { language, changeLanguage } = useTranslation();
+  const { language, changeLanguage, t } = useTranslation();
+  const { success } = useNotification();
   const [showMenu, setShowMenu] = useState(false);
 
   const getCurrentFlag = () => {
@@ -12,6 +14,10 @@ export const LanguageSwitcher: React.FC = () => {
   const handleLanguageChange = (lang: 'en' | 'vi') => {
     changeLanguage(lang);
     setShowMenu(false);
+    
+    // Show notification
+    const langName = lang === 'vi' ? t('language.vietnamese') : t('language.english');
+    success(t('notifications.languageChanged', { language: langName }));
   };
 
   return (

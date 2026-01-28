@@ -22,23 +22,30 @@ export const ViewerPage: React.FC = () => {
   useEffect(() => {
     const fetchModel = async () => {
       if (!slug) {
+        console.log('No slug provided');
         setLoadingState('not-found');
         return;
       }
 
       try {
+        console.log('Fetching model with slug:', slug);
         setLoadingState('loading');
         const data = await modelApi.getBySlug(slug);
+        console.log('Model loaded successfully:', data);
         setModel(data);
         setLoadingState('success');
       } catch (err: any) {
         const message = getErrorMessage(err);
+        console.error('Error loading model:', message);
+        console.error('Full error:', err);
         setErrorMessage(message);
         
         // Check if 404
         if (err?.response?.status === 404) {
+          console.log('Model not found (404)');
           setLoadingState('not-found');
         } else {
+          console.log('Error state set, status:', err?.response?.status);
           setLoadingState('error');
         }
       }

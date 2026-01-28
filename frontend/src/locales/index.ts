@@ -8,16 +8,21 @@ const resources = {
   vi: { translation: vi },
 };
 
-// Detect browser language
+// Get browser language
 const getBrowserLanguage = (): string => {
+  if (typeof window === 'undefined') return 'en';
   const browserLang = navigator.language.toLowerCase();
   if (browserLang.startsWith('vi')) return 'vi';
   return 'en';
 };
 
-// Get saved language or use browser language
-const savedLanguage = localStorage.getItem('language');
-const defaultLanguage = savedLanguage || getBrowserLanguage();
+// Get saved language from localStorage
+const getSavedLanguage = (): string => {
+  if (typeof window === 'undefined') return 'en';
+  return localStorage.getItem('language-storage') || getBrowserLanguage();
+};
+
+const defaultLanguage = getSavedLanguage();
 
 i18n.use(initReactI18next).init({
   resources,

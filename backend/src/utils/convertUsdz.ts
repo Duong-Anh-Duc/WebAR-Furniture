@@ -1,7 +1,10 @@
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getI18n } from '../i18n';
 import { logger } from './logger';
+
+const i18n = getI18n();
 
 /**
  * Kiểm tra Blender có tồn tại không
@@ -50,7 +53,7 @@ export async function convertGlbToUsdz(glbPath: string, usdzPath: string): Promi
 
   // Kiểm tra Blender có sẵn không
   if (!isBlenderAvailable(blenderBin)) {
-    logger.warn('Blender not available, will use fallback method', { blenderBin });
+    logger.warn(i18n.t('conversion.blenderNotAvailable'), { blenderBin });
     return false;
   }
 
@@ -94,7 +97,7 @@ export async function convertGlbToUsdz(glbPath: string, usdzPath: string): Promi
     process.on('close', (code) => {
       if (code === 0 && fs.existsSync(usdzPath)) {
         const fileSize = fs.statSync(usdzPath).size;
-        logger.info('GLB to USDZ conversion successful', {
+        logger.info(i18n.t('conversion.usdzReady'), {
           glbPath,
           usdzPath,
           fileSize,
@@ -103,7 +106,7 @@ export async function convertGlbToUsdz(glbPath: string, usdzPath: string): Promi
         resolve(true);
       } else {
         const error = `Blender conversion failed (code=${code})\nStdout:\n${stdout}\nStderr:\n${stderr}`;
-        logger.error('GLB to USDZ conversion failed', {
+        logger.error(i18n.t('conversion.failed'), {
           glbPath,
           usdzPath,
           code,
@@ -115,7 +118,7 @@ export async function convertGlbToUsdz(glbPath: string, usdzPath: string): Promi
     });
 
     process.on('error', (error) => {
-      logger.warn('Failed to spawn Blender process', {
+      logger.warn(i18n.t('conversion.blenderNotAvailable'), {
         blenderBin,
         error: error.message,
       });

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+export { serveUploadFile } from './upload.config';
 
 dotenv.config();
 
@@ -11,16 +12,16 @@ export const config = {
   // Cơ sở dữ liệu
   databaseUrl: process.env.DATABASE_URL || '',
 
-  // echo3D
-  echo3d: {
-    apiKey: process.env.ECHO3D_API_KEY || '',
-    securityKey: process.env.ECHO3D_SECURITY_KEY || '',
-    apiUrl: process.env.ECHO3D_API_URL || 'https://api.echo3d.com',
+  // Cloudinary
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
 
   // Tải lên
   upload: {
-    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10), // 10MB
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '104857600', 10), // 100MB
     allowedFileTypes: (process.env.ALLOWED_FILE_TYPES || '.glb').split(','),
   },
 

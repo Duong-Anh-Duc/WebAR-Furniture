@@ -78,12 +78,14 @@ export const UploadSuccess: React.FC<UploadSuccessProps> = ({
 
           {/* Status Badge */}
           <div className="flex items-center gap-2">
-            <Badge variant={model.usdzReady ? 'success' : 'warning'}>
-              {model.usdzReady
+            <Badge variant={model.status === 'ready' ? 'success' : model.status === 'failed' ? 'destructive' : 'warning'}>
+              {model.status === 'ready'
                 ? t('upload.status.ready')
+                : model.status === 'failed' 
+                ? t('upload.status.failed')
                 : t('upload.status.convertingIOS')}
             </Badge>
-            {!model.usdzReady && (
+            {model.status !== 'ready' && model.status !== 'failed' && (
               <span className="text-sm text-muted-foreground">
                 {t('upload.publicLink.expiresIn')}
               </span>

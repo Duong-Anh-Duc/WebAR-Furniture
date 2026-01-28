@@ -23,8 +23,15 @@ export const modelApi = {
    * Lấy mô hình theo slug
    */
   getBySlug: async (slug: string): Promise<Model> => {
-    const response = await axiosInstance.get<ModelResponse>(`/models/${slug}`);
-    return response.data.data;
+    try {
+      console.log('Calling getBySlug with slug:', slug);
+      const response = await axiosInstance.get<ModelResponse>(`/models/${slug}`);
+      console.log('getBySlug response:', response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('getBySlug error:', error);
+      throw error;
+    }
   },
 
   /**

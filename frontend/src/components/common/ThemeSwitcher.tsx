@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button';
+import { useNotification } from '@/hooks/useNotification';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Moon, Sun } from 'lucide-react';
@@ -7,9 +8,15 @@ import React from 'react';
 export const ThemeSwitcher: React.FC = () => {
   const { setTheme, isDark } = useTheme();
   const { t } = useTranslation();
+  const { success } = useNotification();
 
   const toggleTheme = () => {
-    setTheme(isDark ? 'light' : 'dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+    
+    // Show notification
+    const themeName = newTheme === 'dark' ? t('theme.dark') : t('theme.light');
+    success(t('notifications.themeChanged', { theme: themeName }));
   };
 
   return (

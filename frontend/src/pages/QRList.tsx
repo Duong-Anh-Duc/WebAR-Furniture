@@ -40,7 +40,9 @@ export const QRListPage: React.FC = () => {
   };
 
   const getPublicUrl = (slug: string) => {
-    return `${window.location.origin}/p/${slug}`;
+    const url = `${window.location.origin}/p/${slug}`;
+    console.log('🔗 Generated public URL:', url);
+    return url;
   };
 
   const filteredModels = useMemo(() => {
@@ -144,7 +146,10 @@ export const QRListPage: React.FC = () => {
         viewMode === 'grid' ? (
           <QRListGridView
             paginatedModels={paginatedModels}
-            onView={(url) => window.open(url, '_blank')}
+            onView={(url) => {
+              console.log('🔍 Grid View button clicked, URL:', url);
+              window.open(url, '_blank');
+            }}
             onDelete={handleDelete}
             getPublicUrl={getPublicUrl}
             formatDate={formatDate}
@@ -162,7 +167,10 @@ export const QRListPage: React.FC = () => {
         ) : (
           <QRListTableView
             paginatedModels={paginatedModels}
-            onView={(url) => window.open(url, '_blank')}
+            onView={(url) => {
+              console.log('🔍 Table View button clicked, URL:', url);
+              window.open(url, '_blank');
+            }}
             onDelete={handleDelete}
             getPublicUrl={getPublicUrl}
             formatDate={formatDate}

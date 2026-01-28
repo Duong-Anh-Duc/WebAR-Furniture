@@ -49,20 +49,25 @@ export class ModelController {
       const i18n = getI18n(lang as 'en' | 'vi');
 
       const { slug } = req.params;
+      console.log('🔍 getModelBySlug called with slug:', slug);
 
       const model = await modelService.getModelBySlug(slug);
+      console.log('📦 Model retrieved from service:', model);
 
       if (!model) {
+        console.log('❌ Model not found for slug:', slug);
         throw new AppError(i18n.t('model.notFound'), 404);
       }
 
       const formatted = ModelFormatter.formatPublicModel(model);
+      console.log('✅ Model formatted successfully:', formatted);
 
       res.json({
         success: true,
         data: formatted,
       });
     } catch (error) {
+      console.error('🚨 Error in getModelBySlug:', error);
       next(error);
     }
   }

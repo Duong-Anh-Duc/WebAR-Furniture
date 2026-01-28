@@ -34,10 +34,10 @@ export const translations = {
     dragDrop: 'Drag & drop your .glb file here',
     or: 'or',
     browseFiles: 'browse files',
-    supportedFormats: 'Supported formats: .GLB, .GLTF (Max size: 10MB)',
+    supportedFormats: 'Supported formats: .GLB, .GLTF (Max size: 100MB)',
     validation: {
       invalidFormat: 'Invalid file format. Please upload a .glb or .gltf file.',
-      tooLarge: 'File is too large. Maximum size is 10MB.',
+      tooLarge: 'File is too large. Maximum size is 100MB.',
       uploadFailed: 'Upload failed. Please try again.',
     },
     status: {
@@ -115,6 +115,7 @@ export const translations = {
     searchPlaceholder: 'Search by model name...',
     ready: 'Ready',
     processing: 'Processing',
+    failed: 'Failed',
     confirmDelete: 'Are you sure you want to delete this model? This action cannot be undone.',
     confirmDeleteTitle: 'Delete Model',
     confirmDeleteDesc: 'Are you sure you want to delete',
@@ -138,6 +139,13 @@ export const translations = {
     actions: 'Actions',
     viewTooltip: 'Open model in AR viewer',
     deleteTooltip: 'Delete this model permanently',
+  },
+  // Notifications
+  notifications: {
+    languageChanged: 'Language changed to {language}',
+    themeChanged: 'Theme changed to {theme}',
+    uploadSuccess: 'File uploaded successfully',
+    uploadFailed: 'Upload failed: {error}',
   },
 };
 

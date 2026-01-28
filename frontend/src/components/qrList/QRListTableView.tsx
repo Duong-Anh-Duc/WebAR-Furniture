@@ -83,10 +83,12 @@ export const QRListTableView: React.FC<QRListTableViewProps> = ({
             width: '120px',
             render: (_, record: Model) => (
               <Tag
-                color={record.usdzReady ? 'green' : 'gold'}
+                color={record.status === 'ready' ? 'green' : record.status === 'failed' ? 'red' : 'gold'}
                 style={{ cursor: 'default' }}
               >
-                {record.usdzReady ? t('qrList.ready') : t('qrList.processing')}
+                {record.status === 'ready' ? t('qrList.ready') : 
+                 record.status === 'failed' ? t('qrList.failed') :
+                 t('qrList.processing')}
               </Tag>
             ),
           },

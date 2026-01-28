@@ -3,11 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { config } from '../config';
 import { prisma } from '../config/database';
+import { getI18n } from '../i18n';
 import { AppError } from '../middleware';
 import { convertGlbToUsdz } from '../utils/convertUsdz';
 import { generateSlug } from '../utils/helpers';
 import { logger } from '../utils/logger';
-import { echo3dService } from './echo3d.service';
+import { cloudinaryService } from './cloudinary.service';
+
+const i18n = getI18n();
 
 export interface CreateModelInput {
   name?: string;
@@ -18,7 +21,7 @@ export interface CreateModelResult {
   id: string;
   name: string | null;
   slug: string;
-  echoEntryId: string;
+  cloudinaryId: string;
   glbUrl: string;
   usdzUrl: string | null;
   usdzReady: boolean;
@@ -30,7 +33,7 @@ export interface CreateModelResult {
 
 export class ModelService {
   /**
-   * Tạo mô hình mới bằng cách tải lên echo3D
+   * Tạo mô hình mới bằng cách upload lên Cloudinary
    */
   async createModel(input: CreateModelInput): Promise<CreateModelResult> {
     const { name, file } = input;
@@ -38,250 +41,257 @@ export class ModelService {
     // Tạo slug trước để dùng làm file ID
     const slug = generateSlug(name || file.originalname.replace(/\.[^/.]+$/, ''));
 
-    // Lưu file vào disk: public/uploads/{slug}.glb
-    const uploadsDir = path.join(__dirname, '../../public/uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    logger.info('Starting model upload to Cloudinary', { name, filename: file.originalname });
+    
+    try {
+      // Upload GLB to Cloudinary
+      const uploadResult = await cloudinaryService.uploadGLB(file, {
+        folder: 'webar-furniture/models',
+        public_id: slug,
+      });
+
+      logger.info('GLB uploaded to Cloudinary successfully', {
+        publicId: uploadResult.public_id,
+        url: uploadResult.secure_url,
+      });
+
+      // Create model in database
+      const model = await prisma.model.create({
+        data: {
+          name: name || null,
+          slug,
+          echoEntryId: uploadResult.public_id, // Using public_id as identifier
+          glbUrl: uploadResult.secure_url,
+          usdzUrl: null,
+          usdzReady: false,
+          status: 'converting',
+        },
+      });
+
+      logger.info(i18n.t('model.created'), { modelId: model.id, slug: model.slug });
+
+      // Start USDZ conversion process
+      this.startUsdzConversion(model.id);
+
+      return this.formatModelResult(model);
+    } catch (error: any) {
+      logger.error('Failed to create model', { error: error.message, name });
+      throw new AppError(i18n.t('model.uploadFailed'), 400, error.message);
     }
-
-    const filePath = path.join(uploadsDir, `${slug}.glb`);
-    fs.writeFileSync(filePath, file.buffer);
-    logger.info('GLB file saved to disk', { filePath });
-
-    // Tải lên echo3D (hoặc simulate nếu TEST_MODE)
-    logger.info('Starting model upload', { name, filename: file.originalname });
-    const echo3dResult = await echo3dService.uploadGLB(file);
-
-    // Lưu vào cơ sở dữ liệu với URL trỏ tới file trên disk
-    const glbUrl = `/api/uploads/${slug}.glb`;
-    const usdzUrl = `/api/uploads/${slug}.usdz`;
-
-    const model = await prisma.model.create({
-      data: {
-        name: name || file.originalname.replace(/\.[^/.]+$/, ''),
-        slug,
-        echoEntryId: echo3dResult.entryId,
-        glbUrl: glbUrl, // URL tới file thực
-        usdzUrl: usdzUrl, // Tương tự cho USDZ
-        usdzReady: false,
-        status: 'converting',
-      },
-    });
-
-    logger.info('Model created in database', {
-      id: model.id,
-      slug: model.slug,
-      glbPath: filePath,
-    });
-
-    // Bắt đầu bỏ phiếu cho chuyển đổi USDZ
-    this.startUsdzPolling(model.id);
-
-    return this.formatModelResult(model);
   }
 
   /**
-   * Lấy mô hình theo slug (công khai)
+   * Lấy danh sách tất cả models
    */
-  async getModelBySlug(slug: string): Promise<Model | null> {
+  async getAllModels(
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<{ models: CreateModelResult[]; total: number; totalPages: number }> {
+    const skip = (page - 1) * limit;
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { slug: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [models, total] = await Promise.all([
+      prisma.model.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.model.count({ where }),
+    ]);
+
+    return {
+      models: models.map((model) => this.formatModelResult(model)),
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Lấy model theo ID
+   */
+  async getModelById(id: string): Promise<Model | null> {
+    return prisma.model.findUnique({
+      where: { id },
+    });
+  }
+
+  /**
+   * Lấy model theo slug
+   */
+  async getModelBySlug(slug: string): Promise<CreateModelResult | null> {
+    console.log('🔎 getModelBySlug service called with slug:', slug);
     const model = await prisma.model.findUnique({
       where: { slug },
     });
 
-    return model;
+    if (model) {
+      console.log('✅ Model found in database:', model);
+      return this.formatModelResult(model);
+    } else {
+      console.log('❌ No model found in database for slug:', slug);
+      return null;
+    }
   }
 
   /**
-   * Lấy mô hình theo ID
-   */
-  async getModelById(id: string): Promise<Model | null> {
-    const model = await prisma.model.findUnique({
-      where: { id },
-    });
-
-    return model;
-  }
-
-  /**
-   * Lấy tất cả mô hình (admin)
-   */
-  async getAllModels(): Promise<Model[]> {
-    const models = await prisma.model.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return models;
-  }
-
-  /**
-   * Xóa mô hình
+   * Xóa model
    */
   async deleteModel(id: string): Promise<void> {
     const model = await this.getModelById(id);
 
     if (!model) {
-      throw new AppError('Model not found', 404);
+      throw new AppError(i18n.t('model.notFound'), 404);
     }
 
-    // Xóa từ echo3D
     try {
-      await echo3dService.deleteEntry(model.echoEntryId);
-    } catch (error) {
-      logger.error('Failed to delete from echo3D, continuing with DB deletion', {
+      // Delete from Cloudinary
+      await cloudinaryService.deleteFile(model.echoEntryId);
+      
+      // If USDZ exists, delete it too
+      if (model.usdzUrl) {
+        const usdzPublicId = `${model.slug}_usdz`;
+        await cloudinaryService.deleteFile(usdzPublicId);
+      }
+
+      logger.info('Files deleted from Cloudinary successfully', { modelId: id });
+    } catch (error: any) {
+      logger.error('Failed to delete files from Cloudinary', {
         modelId: id,
-        error,
+        error: error.message,
       });
     }
 
-    // Xóa từ cơ sở dữ liệu
+    // Delete from database
     await prisma.model.delete({
       where: { id },
     });
 
-    logger.info('Model deleted', { id });
+    logger.info(i18n.t('model.deleted'), { modelId: id });
   }
 
   /**
-   * Bắt đầu bỏ phiếu cho chuyển đổi USDZ
+   * Bắt đầu quá trình convert USDZ bằng Blender
    */
-  private startUsdzPolling(modelId: string): void {
-    logger.info('Starting USDZ polling', { modelId });
+  private async startUsdzConversion(modelId: string): Promise<void> {
+    logger.info('Starting USDZ conversion with Blender', { modelId });
 
-    const startTime = Date.now();
-    const pollingInterval = config.polling.usdzInterval;
-    const pollingTimeout = config.polling.usdzTimeout;
-
-    // Convert GLB to USDZ using Blender (or fallback to copy in TEST_MODE)
-    prisma.model.findUnique({ where: { id: modelId } }).then(async (model) => {
+    try {
+      const model = await this.getModelById(modelId);
+      
       if (!model) {
         logger.error('Model not found for USDZ conversion', { modelId });
         return;
       }
 
-      const uploadsDir = path.join(__dirname, '../../public/uploads');
-      const glbPath = path.join(uploadsDir, `${model.slug}.glb`);
-      const usdzPath = path.join(uploadsDir, `${model.slug}.usdz`);
-
-      if (!fs.existsSync(glbPath)) {
-        logger.error('GLB file not found for conversion', { glbPath, modelId });
-        await prisma.model.update({
-          where: { id: modelId },
-          data: { status: 'failed' },
-        });
+      if (!model.glbUrl) {
+        logger.error('GLB URL not found for model', { modelId });
         return;
       }
 
-      try {
-        // Try Blender conversion first
-        logger.info('Converting GLB to USDZ using Blender', { glbPath, usdzPath });
-        const blenderSuccess = await convertGlbToUsdz(glbPath, usdzPath);
+      // Create temp directory for conversion
+      const tempDir = path.join(__dirname, '../../temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
 
-        if (blenderSuccess) {
-          // Update model to ready
-          await prisma.model.update({
-            where: { id: modelId },
-            data: {
-              usdzReady: true,
-              status: 'ready',
-            },
-          });
+      const tempGlbPath = path.join(tempDir, `${model.slug}_temp.glb`);
+      const tempUsdzPath = path.join(tempDir, `${model.slug}_temp.usdz`);
 
-          const fileSize = fs.statSync(usdzPath).size;
-          logger.info('USDZ conversion successful', { modelId, usdzPath, fileSize });
-        } else {
-          throw new Error('Blender conversion not available');
-        }
-      } catch (error: any) {
-        logger.warn('Blender conversion failed or not available, falling back to copy', {
+      // Download GLB from Cloudinary
+      logger.info('Downloading GLB from Cloudinary', { glbUrl: model.glbUrl });
+      const response = await fetch(model.glbUrl);
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(tempGlbPath, Buffer.from(buffer));
+
+      // Convert GLB to USDZ using Blender
+      logger.info('Converting GLB to USDZ', { tempGlbPath, tempUsdzPath });
+      const conversionSuccess = await convertGlbToUsdz(tempGlbPath, tempUsdzPath);
+
+      if (!conversionSuccess || !fs.existsSync(tempUsdzPath)) {
+        logger.warn('Blender conversion failed or skipped - marking model as ready without USDZ', {
           modelId,
-          error: error.message,
+          conversionSuccess,
+          fileExists: fs.existsSync(tempUsdzPath),
         });
 
-        // Fallback: Copy GLB to USDZ (for environments without Blender)
+        // Update model status to ready without USDZ
+        await prisma.model.update({
+          where: { id: modelId },
+          data: {
+            usdzUrl: null,
+            usdzReady: false,
+            status: 'ready',
+          },
+        });
+
+        // Clean up temp files
+        if (fs.existsSync(tempGlbPath)) fs.unlinkSync(tempGlbPath);
+        if (fs.existsSync(tempUsdzPath)) fs.unlinkSync(tempUsdzPath);
+        return;
+      }
+
+      // Delete old USDZ file if exists (remove invalid placeholder)
+      if (model.usdzUrl) {
         try {
-          fs.copyFileSync(glbPath, usdzPath);
-          logger.info('Fallback: USDZ created by copying GLB', { glbPath, usdzPath });
-
-          await prisma.model.update({
-            where: { id: modelId },
-            data: {
-              usdzReady: true,
-              status: 'ready',
-            },
-          });
-        } catch (fallbackError) {
-          logger.error('Both Blender and fallback conversion failed', {
+          await cloudinaryService.deleteFile(`webar-furniture/usdz/${model.slug}`);
+          logger.info('Deleted old USDZ file', { modelId });
+        } catch (deleteError: any) {
+          logger.warn('Failed to delete old USDZ file', {
             modelId,
-            blenderError: error.message,
-            fallbackError,
-          });
-
-          await prisma.model.update({
-            where: { id: modelId },
-            data: { status: 'failed' },
+            error: deleteError.message,
           });
         }
       }
-    }).catch((error) => {
-      logger.error('Error in startUsdzPolling', { modelId, error: error.message });
-    });
-    return;
 
-    const pollInterval = setInterval(async () => {
-      try {
-        const model = await this.getModelById(modelId);
+      // Upload USDZ to Cloudinary
+      logger.info('Uploading USDZ to Cloudinary', { tempUsdzPath });
+      const usdzUploadResult = await cloudinaryService.uploadUSDZ(tempUsdzPath, {
+        folder: 'webar-furniture/usdz',
+        public_id: model.slug,
+      });
 
-        if (!model) {
-          clearInterval(pollInterval);
-          return;
-        }
+      logger.info('USDZ uploaded to Cloudinary successfully', {
+        modelId,
+        publicId: usdzUploadResult.public_id,
+        url: usdzUploadResult.secure_url,
+      });
 
-        // Đã sẵn sàng hoặc không thành công
-        if (model.usdzReady || model.status === 'failed' || model.status === 'ready') {
-          clearInterval(pollInterval);
-          return;
-        }
+      // Update model with USDZ URL
+      await prisma.model.update({
+        where: { id: modelId },
+        data: {
+          usdzUrl: usdzUploadResult.secure_url,
+          usdzReady: true,
+          status: 'ready',
+        },
+      });
 
-        // Kiểm tra hết giờ
-        if (Date.now() - startTime > pollingTimeout) {
-          logger.warn('USDZ polling timeout', { modelId });
-          await prisma.model.update({
-            where: { id: modelId },
-            data: {
-              status: 'failed',
-            },
-          });
-          clearInterval(pollInterval);
-          return;
-        }
+      // Clean up temp files
+      if (fs.existsSync(tempGlbPath)) fs.unlinkSync(tempGlbPath);
+      if (fs.existsSync(tempUsdzPath)) fs.unlinkSync(tempUsdzPath);
 
-        // Kiểm tra xem USDZ có sẵn sàng không
-        if (model.usdzUrl) {
-          const isReady = await echo3dService.checkUsdzReady(model.usdzUrl);
+      logger.info('USDZ conversion and upload completed successfully', { modelId });
 
-          if (isReady) {
-            logger.info('USDZ is ready', { modelId });
-            await prisma.model.update({
-              where: { id: modelId },
-              data: {
-                usdzReady: true,
-                status: 'ready',
-              },
-            });
-            clearInterval(pollInterval);
-          } else {
-            logger.debug('USDZ not ready yet', { modelId });
-          }
-        }
-      } catch (error) {
-        logger.error('Error during USDZ polling', {
-          modelId,
-          error,
-        });
-      }
-    }, pollingInterval);
+    } catch (error: any) {
+      logger.error('Failed to convert and upload USDZ', {
+        modelId,
+        error: error.message,
+      });
+
+      await prisma.model.update({
+        where: { id: modelId },
+        data: { status: 'failed' },
+      });
+    }
   }
 
   /**
@@ -290,6 +300,7 @@ export class ModelService {
   private formatModelResult(model: Model): CreateModelResult {
     return {
       ...model,
+      cloudinaryId: model.echoEntryId, // Map echoEntryId to cloudinaryId for backward compatibility
       viewerUrl: `${config.baseUrl}/p/${model.slug}`,
     };
   }

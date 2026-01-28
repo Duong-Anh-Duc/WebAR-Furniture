@@ -52,11 +52,15 @@ export const QRModelCard: React.FC<QRModelCardProps> = ({
         </p>
         <div className="flex justify-center gap-1">
           <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
-            model.usdzReady 
+            model.status === 'ready' 
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
+              : model.status === 'failed'
+              ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
               : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
           }`}>
-            {model.usdzReady ? t('qrList.ready') : t('qrList.processing')}
+            {model.status === 'ready' ? t('qrList.ready') : 
+             model.status === 'failed' ? t('qrList.failed') :
+             t('qrList.processing')}
           </span>
         </div>
       </div>
@@ -68,7 +72,11 @@ export const QRModelCard: React.FC<QRModelCardProps> = ({
             size="sm"
             variant="outline"
             className="flex-1"
-            onClick={() => onView(publicUrl)}
+            onClick={() => {
+              console.log('🔍 View button clicked');
+              console.log('📍 Public URL:', publicUrl);
+              onView(publicUrl);
+            }}
           >
             <Eye className="h-4 w-4" />
           </Button>

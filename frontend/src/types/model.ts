@@ -2,10 +2,13 @@ export interface Model {
   id: string;
   name: string | null;
   slug: string;
+  cloudinaryId?: string;
   glbUrl: string;
   usdzUrl: string | null;
   usdzReady: boolean;
+  status?: string;
   createdAt?: string;
+  updatedAt?: string;
   viewerUrl?: string;
 }
 

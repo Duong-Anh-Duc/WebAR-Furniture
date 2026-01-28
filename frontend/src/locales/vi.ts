@@ -34,10 +34,10 @@ export const translations = {
     dragDrop: 'Kéo và thả file .glb vào đây',
     or: 'hoặc',
     browseFiles: 'chọn file',
-    supportedFormats: 'Định dạng hỗ trợ: .GLB, .GLTF (Tối đa: 10MB)',
+    supportedFormats: 'Định dạng hỗ trợ: .GLB, .GLTF (Tối đa: 100MB)',
     validation: {
       invalidFormat: 'Định dạng file không hợp lệ. Vui lòng tải lên file .glb hoặc .gltf.',
-      tooLarge: 'File quá lớn. Dung lượng tối đa là 10MB.',
+      tooLarge: 'File quá lớn. Dung lượng tối đa là 100MB.',
       uploadFailed: 'Tải lên thất bại. Vui lòng thử lại.',
     },
     status: {
@@ -115,6 +115,7 @@ export const translations = {
     searchPlaceholder: 'Tìm kiếm theo tên mô hình...',
     ready: 'Sẵn sàng',
     processing: 'Đang xử lý',
+    failed: 'Thất bại',
     confirmDelete: 'Bạn có chắc chắn muốn xóa mô hình này không? Hành động này không thể hoàn tác.',
     confirmDeleteTitle: 'Xóa mô hình',
     confirmDeleteDesc: 'Bạn có chắc chắn muốn xóa',
@@ -138,6 +139,13 @@ export const translations = {
     actions: 'Thao tác',
     viewTooltip: 'Mở mô hình trong trình xem AR',
     deleteTooltip: 'Xóa mô hình này vĩnh viễn',
+  },
+  // Thông báo
+  notifications: {
+    languageChanged: 'Đã chuyển ngôn ngữ sang {language}',
+    themeChanged: 'Đã chuyển giao diện thành {theme}',
+    uploadSuccess: 'Tải lên file thành công',
+    uploadFailed: 'Tải lên thất bại: {error}',
   },
 };
 

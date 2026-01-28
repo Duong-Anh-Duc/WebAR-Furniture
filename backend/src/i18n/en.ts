@@ -21,8 +21,8 @@ export const translations = {
     conversionInProgress: 'Model is being optimized for iOS',
     conversionFailed: 'Failed to convert model for iOS',
     conversionReady: 'Model is ready for AR',
-    echo3dUploadFailed: 'Failed to upload to echo3D service',
-    echo3dError: 'echo3D service error: {error}',
+    echo3dUploadFailed: 'Failed to upload to cloud storage',
+    echo3dError: 'Cloud storage error: {error}',
     invalidSlug: 'Invalid model slug',
     deleteFailed: 'Failed to delete model',
     deleteSuccess: 'Model deleted successfully',
@@ -43,6 +43,32 @@ export const translations = {
     error: 'Server error: {error}',
     dbConnected: 'Database connected successfully',
     dbError: 'Database connection error: {error}',
+  },
+
+  // File upload
+  file: {
+    invalidFilename: 'Invalid filename',
+    notFound: 'File not found',
+    failedToServe: 'Failed to serve file',
+  },
+
+  // Conversion
+  conversion: {
+    blenderNotAvailable: 'Blender conversion not available',
+    bothFailed: 'Both Blender and fallback conversion failed',
+    glbNotFound: 'GLB file not found for conversion',
+    failed: 'Conversion failed',
+    usdzPollingTimeout: 'USDZ polling timeout',
+    usdzReady: 'USDZ is ready',
+    usdzNotReady: 'USDZ not ready yet',
+  },
+
+  // Cloudinary
+  cloudinary: {
+    uploadFailed: 'Cloudinary upload failed',
+    configurationError: 'Cloudinary configuration error',
+    serviceError: 'Cloudinary service error: {error}',
+    deleteFailed: 'Failed to delete from Cloudinary',
   },
 };
 

@@ -2,6 +2,7 @@ import { getErrorMessage } from '@/api/axiosInstance';
 import { modelApi } from '@/api/modelApi';
 import { Card, CardContent } from '@/components/ui/Card';
 import { UploadDropZone, UploadErrorMessage, UploadHeader, UploadSuccess } from '@/components/upload';
+import { MAX_FILE_SIZE } from '@/constants/app';
 import { useNotification } from '@/hooks/useNotification';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Model } from '@/types/model';
@@ -22,14 +23,13 @@ export const AdminUploadPage: React.FC = () => {
   // Xác thực
   const validateFile = (file: File): { valid: boolean; error?: string } => {
     const validExtensions = ['.glb', '.gltf'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
 
     const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
     if (!validExtensions.includes(extension)) {
       return { valid: false, error: t('upload.validation.invalidFormat') };
     }
 
-    if (file.size > maxSize) {
+    if (file.size > MAX_FILE_SIZE) {
       return { valid: false, error: t('upload.validation.tooLarge') };
     }
 

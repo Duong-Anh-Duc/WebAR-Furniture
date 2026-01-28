@@ -2,7 +2,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ThemeSwitcher';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/hooks/useTranslation';
-import { QrCode, Sofa, Upload } from 'lucide-react';
+import { Globe, QrCode, Upload } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -19,7 +19,7 @@ export const Header: React.FC = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-          <Sofa className="h-6 w-6 text-primary" />
+          <Globe className="h-6 w-6 text-primary" />
           <span className="hidden sm:inline">{t('header.title')}</span>
         </Link>
 

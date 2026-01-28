@@ -17,6 +17,14 @@ class Server {
 
   constructor() {
     this.app = express();
+    
+    // Trust proxy cho deployment trên cloud (Render, Heroku, etc.)
+    // Chỉ enable trong production hoặc khi có biến môi trường TRUST_PROXY
+    if (config.nodeEnv === 'production' || process.env.TRUST_PROXY === 'true') {
+      this.app.set('trust proxy', true);
+      logger.info('Trust proxy enabled for cloud deployment');
+    }
+    
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();

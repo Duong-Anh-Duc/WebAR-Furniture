@@ -21,8 +21,8 @@ export const translations = {
     conversionInProgress: 'Đang tối ưu hóa mô hình cho iOS',
     conversionFailed: 'Không thể chuyển đổi mô hình cho iOS',
     conversionReady: 'Mô hình đã sẵn sàng cho AR',
-    echo3dUploadFailed: 'Không thể tải lên dịch vụ echo3D',
-    echo3dError: 'Lỗi dịch vụ echo3D: {error}',
+    echo3dUploadFailed: 'Không thể tải lên cloud storage',
+    echo3dError: 'Lỗi cloud storage: {error}',
     invalidSlug: 'Mã định danh mô hình không hợp lệ',
     deleteFailed: 'Không thể xóa mô hình',
     deleteSuccess: 'Đã xóa mô hình thành công',
@@ -43,6 +43,32 @@ export const translations = {
     error: 'Lỗi máy chủ: {error}',
     dbConnected: 'Kết nối cơ sở dữ liệu thành công',
     dbError: 'Lỗi kết nối cơ sở dữ liệu: {error}',
+  },
+
+  // File upload
+  file: {
+    invalidFilename: 'Tên file không hợp lệ',
+    notFound: 'Không tìm thấy file',
+    failedToServe: 'Không thể phục vụ file',
+  },
+
+  // Conversion
+  conversion: {
+    blenderNotAvailable: 'Chuyển đổi Blender không khả dụng',
+    bothFailed: 'Cả chuyển đổi Blender và dự phòng đều thất bại',
+    glbNotFound: 'Không tìm thấy file GLB để chuyển đổi',
+    failed: 'Chuyển đổi thất bại',
+    usdzPollingTimeout: 'Hết thời gian chờ USDZ',
+    usdzReady: 'USDZ đã sẵn sàng',
+    usdzNotReady: 'USDZ chưa sẵn sàng',
+  },
+
+  // Cloudinary
+  cloudinary: {
+    uploadFailed: 'Tải lên Cloudinary thất bại',
+    configurationError: 'Lỗi cấu hình Cloudinary',
+    serviceError: 'Lỗi dịch vụ Cloudinary: {error}',
+    deleteFailed: 'Không thể xóa từ Cloudinary',
   },
 };
 

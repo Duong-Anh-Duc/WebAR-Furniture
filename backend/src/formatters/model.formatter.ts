@@ -1,5 +1,6 @@
 import { Model } from '@prisma/client';
 import { config } from '../config';
+import { CreateModelResult } from '../services/model.service';
 
 export interface FormattedModel {
   id: string;
@@ -29,21 +30,19 @@ export class ModelFormatter {
    * Convert relative URL thành absolute URL cho API access
    */
   private static makeAbsoluteUrl(url: string): string {
-    // Nếu đã là absolute URL, trả về ngay
+    // Nếu đã là absolute URL (từ Cloudinary hoặc external service), trả về ngay
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
     
-    // URL từ database đã có /api, chỉ cần thêm domain:port
-    // Từ: /api/models/test-xxx/file?format=glb
-    // Thành: http://172.20.10.5:8000/api/models/test-xxx/file?format=glb
+    // Chỉ convert nếu là relative URL
     const apiBaseUrl = config.baseUrl.replace(':3000', ':8000');
     return `${apiBaseUrl}${url}`;
   }
   /**
    * Định dạng mô hình cho phản hồi admin
    */
-  static formatModel(model: Model): FormattedModel {
+  static formatModel(model: Model | CreateModelResult): FormattedModel {
     return {
       id: model.id,
       name: model.name,
@@ -61,7 +60,7 @@ export class ModelFormatter {
   /**
    * Định dạng mô hình cho trình xem công khai (không có dữ liệu nhạy cảm)
    */
-  static formatPublicModel(model: Model): PublicModelData {
+  static formatPublicModel(model: Model | CreateModelResult): PublicModelData {
     return {
       id: model.id,
       name: model.name,
@@ -76,8 +75,12 @@ export class ModelFormatter {
   /**
    * Format multiple models
    */
-  static formatModels(models: Model[]): FormattedModel[] {
-    return models.map((model) => this.formatModel(model));
+  static formatModels(models: Model[] | CreateModelResult[] | { models: CreateModelResult[]; total: number; totalPages: number }): FormattedModel[] {
+    if (Array.isArray(models)) {
+      return models.map((model) => this.formatModel(model));
+    } else {
+      return models.models.map((model) => this.formatModel(model));
+    }
   }
 }
 
